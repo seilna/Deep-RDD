@@ -15,9 +15,9 @@ for op, args in op_list:
 	print op, args
 	if op == '--drowsiness' :
 		if args == 'True':
-			snapshot_dir = '/Users/naseil/Desktop/Hanyang University/Projects/Presentation/snapshot_dir/' + name + '_drowsiness/'
+			snapshot_dir = '/Users/naseil/Desktop/Hanyang University/Projects/Drowsiness_Detector/eye_region_dataset/snapshot_dir/' + name + '_drowsiness/'
 		elif args == 'False':
-			snapshot_dir = '/Users/naseil/Desktop/Hanyang University/Projects/Presentation/snapshot_dir/' + name + '/'
+			snapshot_dir = '/Users/naseil/Desktop/Hanyang University/Projects/Drowsiness_Detector/eye_region_dataset/snapshot_dir/' + name + '/'
 
 
 subprocess.call(['mkdir', snapshot_dir])
