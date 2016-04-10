@@ -88,5 +88,5 @@ def read_dataset(validation_rate):
 
 	return data_sets
 
-data_sets = read_dataset(10)
+#data_sets = read_dataset(10)
 
