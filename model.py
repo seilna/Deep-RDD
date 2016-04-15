@@ -3,8 +3,6 @@ import numpy as np
 import load_dataset
 sess = tf.InteractiveSession()
 data_sets = load_dataset.read_dataset(10)
-print data_sets.validation.images.shape
-print data_sets.validation.labels.shape
 
 
 def weight_variable(shape):
@@ -74,21 +72,27 @@ W_fc3 = weight_variable([1024,2])
 b_fc3 = bias_variable([2])
 y_conv = tf.nn.softmax(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
 
-cross_entropy = -tf.reduce_sum(y_conv*tf.log(y_+1e-7))
-train_step = tf.train.AdamOptimizer(1e-6).minimize(cross_entropy)
+
+
+l2_loss = tf.reduce_mean(tf.reduce_sum((y_conv - y_)*(y_conv -y_)))
+#cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_conv*tf.log(y_+1e-7)))
+train_step = tf.train.AdamOptimizer(1e-6).minimize(l2_loss)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
 sess.run(tf.initialize_all_variables())
 
+#loss_curve = open('./loss_curve.csv', 'w')
 for iteration in xrange(100000):
 	if iteration % 20 == 0:
 		acc = accuracy.eval(feed_dict={x:data_sets.validation.images, 
 				y_:data_sets.validation.labels, keep_prob:1.0})
-		loss = sess.run(cross_entropy, feed_dict={x:data_sets.validation.images,
+		loss = sess.run(l2_loss, feed_dict={x:data_sets.validation.images,
 				y_:data_sets.validation.labels, keep_prob:1.0})
 	
 		print '%dth iteration... accuracy >> %lf, loss .. %lf' % (iteration, acc, loss/float(data_sets.validation.num_examples))
+		contents = str(loss/float(data_sets.validation.num_examples)) + ',\n'
+		#loss_curve.write(contents)
 
 	batch_x, batch_y = data_sets.train.next_batch(50)
 	sess.run([train_step], feed_dict={x:batch_x, y_:batch_y, keep_prob:0.5})
