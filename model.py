@@ -1,8 +1,13 @@
+import glob
+import cv2
+import load_dataset
 import tensorflow as tf
 import numpy as np
-import load_dataset
+
 sess = tf.InteractiveSession()
+
 data_sets = load_dataset.read_dataset(10)
+print data_sets.train.images.shape
 
 
 def weight_variable(shape):
@@ -85,26 +90,17 @@ sess.run(tf.initialize_all_variables())
 #loss_curve = open('./loss_curve.csv', 'w')
 for iteration in xrange(100000):
 	if iteration % 20 == 0:
-		acc = accuracy.eval(feed_dict={x:data_sets.validation.images, 
+		acc = accuracy.eval(feed_dict={x:data_sets.validation.images,
 				y_:data_sets.validation.labels, keep_prob:1.0})
 		loss = sess.run(l2_loss, feed_dict={x:data_sets.validation.images,
 				y_:data_sets.validation.labels, keep_prob:1.0})
-	
+
 		print '%dth iteration... accuracy >> %lf, loss .. %lf' % (iteration, acc, loss/float(data_sets.validation.num_examples))
 		contents = str(loss/float(data_sets.validation.num_examples)) + ',\n'
 		#loss_curve.write(contents)
 
 	batch_x, batch_y = data_sets.train.next_batch(50)
 	sess.run([train_step], feed_dict={x:batch_x, y_:batch_y, keep_prob:0.5})
-
-
-
-
-
-
-
-
-
 
 
 
