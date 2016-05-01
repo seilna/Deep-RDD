@@ -40,22 +40,22 @@ def image_to_dataset():
 
     image, label = [], []
     images = None
-    images = glob.glob('./face_region_dataset/usual_dataset/*')
+    images = glob.glob('./only_eye_region/usual_dataset/*')
 
     print "usual size >> " + str(len(images))
 
     for file in images:
         im = cv2.imread(file)
-        im = cv2.resize(im, (64,64))
+        im = cv2.resize(im, (32,32))
         image.append(im)
         label.append([1.0,0.0])
 
-    images = glob.glob('./face_region_dataset/drowsiness_dataset/*')
+    images = glob.glob('./only_eye_region/drowsiness_dataset/*')
 
     print "drowsiness size >> " + str(len(images))
     for file in images:
         im = cv2.imread(file)
-        im = cv2.resize(im, (64,64))
+        im = cv2.resize(im, (32,32))
         image.append(im)
         label.append([0.0,1.0])
 

@@ -4,7 +4,7 @@ import load_dataset
 import tensorflow as tf
 import numpy as np
 
-IM_SIZE = 64
+IM_SIZE = 32
 BATCH_SIZE = 100
 
 sess = tf.InteractiveSession()
