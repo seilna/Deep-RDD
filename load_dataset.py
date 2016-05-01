@@ -28,42 +28,49 @@ class DataSet(object):
 			np.random.shuffle(perm)
 			self.images = self.images[perm]
 			self.labels = self.labels[perm]
-			
+
 			#start the next batch
 			start = 0
 			self.index_in_epoch = batch_size
 
 		end = self.index_in_epoch
 		return self.images[start:end], self.labels[start:end]
-			
+
 def image_to_dataset():
-	
-	image, label = [], []
-	images = None
-	images = glob.glob('./eye_region_dataset/usual_dataset/*')
 
-	for file in images:
-		im = cv2.imread(file)
-		im = cv2.resize(im, (32,32))
-		image.append(im)
-		label.append([1,0])
+    image, label = [], []
+    images = None
+    images = glob.glob('./face_region_dataset/usual_dataset/*')
 
-	images = glob.glob('./eye_region_dataset/drowsiness_dataset/*')
-	for file in images:
-		im = cv2.imread(file)
-		im = cv2.resize(im, (32,32))
-		image.append(im)
-		lable.append([0,1])
+    print "usual size >> " + str(len(images))
 
-	image = np.array(image)
-	label = np.array(label)
+    for file in images:
+        im = cv2.imread(file)
+        im = cv2.resize(im, (64,64))
+        image.append(im)
+        label.append([1.0,0.0])
 
-	perm = np.arange(image.shape[0])
-	np.random.shuffle(perm)
-	image = image[perm]
-	lable = label[perm]
+    images = glob.glob('./face_region_dataset/drowsiness_dataset/*')
 
-	return image, label
+    print "drowsiness size >> " + str(len(images))
+    for file in images:
+        im = cv2.imread(file)
+        im = cv2.resize(im, (64,64))
+        image.append(im)
+        label.append([0.0,1.0])
+
+    image = [x/float(255) for x in image]
+    image = np.array(image)
+    label = np.array(label)
+
+    print image
+    perm = np.arange(image.shape[0])
+    np.random.shuffle(perm)
+    print perm
+    image = image[perm]
+    label = label[perm]
+
+    return image, label
 
 def read_dataset(validation_rate):
 
@@ -82,7 +89,7 @@ def read_dataset(validation_rate):
 
 	validation_image = image[:VALIDATION_SIZE]
 	validation_label = label[:VALIDATION_SIZE]
-	
+
 	data_sets.train = DataSet(train_image, train_label)
 	data_sets.validation = DataSet(validation_image, validation_label)
 
