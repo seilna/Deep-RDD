@@ -121,7 +121,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.initialize_all_variables().run()
 
 saver = tf.train.Saver()
-SAVE_PATH = "./checkpoint/iteration.30000.ckpt"
+SAVE_PATH = "./checkpoint/iteration.50000.ckpt"
 saver.restore(sess, SAVE_PATH)
 
 
@@ -146,6 +146,8 @@ while True:
             eye_region_image = roi_gray[ey:ey+eh, ex:ex+ew]
             input_images = []
             input_images.append(eye_region_image)
+            for a in input_images:
+                a /= float(255)
             input_images = np.array(input_images)
 
             # Detecting drowsiness using CNN models.
