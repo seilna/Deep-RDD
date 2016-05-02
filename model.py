@@ -9,7 +9,7 @@ BATCH_SIZE = 100
 
 sess = tf.InteractiveSession()
 
-data_sets = load_dataset.read_dataset(10)
+data_sets = load_dataset.read_dataset(20)
 print "training dataset shape >> " + str(data_sets.train.images.shape)
 print "validation dataset shape >> " + str(data_sets.validation.images.shape)
 
@@ -17,11 +17,11 @@ print data_sets.train.labels
 print data_sets.validation.labels
 
 def weight_variable(shape):
-	initial = tf.truncated_normal(shape, stddev=0.1)/100
-	return tf.Variable(initial)
+    initial = tf.truncated_normal(shape, stddev=0.05)
+    return tf.Variable(initial)
 
 def bias_variable(shape):
-	initial = tf.constant(0.001, shape=shape)
+	initial = tf.constant(0.1, shape=shape)
 	return tf.Variable(initial)
 
 def conv2d(x, W):
@@ -113,55 +113,35 @@ y_matmul = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 
 y_conv = tf.nn.softmax(y_matmul)
 
-l2_loss = tf.reduce_mean(tf.reduce_sum((y_conv - y_)*(y_conv - y_),
-                                       reduction_indices=[1]))
-#l2_loss = tf.reduce_mean(-tf.reduce_sum(y_conv*tf.log(y_+1e-7), reduction_indices=[1]))
+l2_loss = tf.reduce_mean(-tf.reduce_sum(y_*tf.log(y_conv+1e-7), reduction_indices=[1]))
 train_step = tf.train.AdamOptimizer(1e-3).minimize(l2_loss)
-#train_step = tf.train.AdagradOptimizer(1e-3).minimize(l2_loss)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-
-#print_op = tf.Print(y_conv)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.initialize_all_variables().run()
 
 loss_curve = open('./loss_curve.csv', 'w')
-for iteration in xrange(100000):
-    if iteration % 60 == 0:
+saver = tf.train.Saver()
+
+SAVE_PATH = "./checkpoint/"
+for iteration in xrange(1000000):
+    if iteration % 70 == 0:
         valid_batch_x, valid_batch_y = data_sets.validation.next_batch(BATCH_SIZE)
-        acc = accuracy.eval(feed_dict={x: data_sets.validation.images,
-                                       y_: data_sets.validation.labels, keep_prob:1.0})
-        loss = sess.run(l2_loss, feed_dict={x: data_sets.validation.images,
-                                            y_: data_sets.validation.labels, keep_prob:1.0})
-
-
-        p = sess.run(y_conv, feed_dict = {x: data_sets.validation.images,
-                                        y_: data_sets.validation.labels,
-                                        keep_prob:1.0})
-
-        before_softmax = sess.run(y_matmul, feed_dict = {x: data_sets.validation.images,
-                                        y_: data_sets.validation.labels,
-                                        keep_prob:1.0})
-
-
-
-        """
-        print p
-        """
-        print p.shape
-        for i in xrange(len(p)):
-            a,b = p[i]
-            c,d = data_sets.validation.labels[i]
-            e,f = before_softmax[i]
-            print "gt[%d,%d], output[%d,%d], bs[%lf,%lf]" % (c,d,a,b,e,f)
-
-        #print valid_batch_y
+        acc = accuracy.eval(feed_dict={x: valid_batch_x,
+                                       y_: valid_batch_y, keep_prob:1.0})
+        loss = sess.run(l2_loss, feed_dict={x: valid_batch_x,
+                                            y_: valid_batch_y, keep_prob:1.0})
 
         print '%dth iteration... accuracy >> %lf, loss .. %lf' % (iteration, acc, loss)
         contents = str(loss) + ',\n'
         loss_curve.write(contents)
 
     batch_x, batch_y = data_sets.train.next_batch(BATCH_SIZE)
-    #print "batch shape >> " + str(batch_x.shape)
-    #print "label >> " + str(batch_y)
     train_step.run(feed_dict={x:batch_x, y_:batch_y, keep_prob:0.5})
-    #sess.run(train_step, feed_dict={x:batch_x, y_:batch_y, keep_prob:0.5})
+
+    if iteration % 2000 == 0  and iteration > 0 == 0 :
+        checkpoint_file = SAVE_PATH + "iteration." + str(iteration) + ".ckpt"
+        saver.save(sess,checkpoint_file)
+        print "CNN models are saved in %s." % checkpoint_file
+
+
+
