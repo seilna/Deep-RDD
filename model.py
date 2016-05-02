@@ -17,11 +17,11 @@ print data_sets.train.labels
 print data_sets.validation.labels
 
 def weight_variable(shape):
-	initial = tf.truncated_normal(shape, stddev=0.1)
+	initial = tf.truncated_normal(shape, stddev=0.1)/100
 	return tf.Variable(initial)
 
 def bias_variable(shape):
-	initial = tf.constant(0.1, shape=shape)
+	initial = tf.constant(0.001, shape=shape)
 	return tf.Variable(initial)
 
 def conv2d(x, W):
@@ -109,44 +109,52 @@ h_fc2_drop = tf.nn.dropout(h_fc2, keep_prob)
 W_fc3 = weight_variable([1024,2])
 b_fc3 = bias_variable([2])
 
-y_matmul = tf.nn.relu(tf.matmul(h_fc2_drop, W_fc3) + b_fc3)
+y_matmul = tf.matmul(h_fc2_drop, W_fc3) + b_fc3
 
 y_conv = tf.nn.softmax(y_matmul)
 
-
-
-l2_loss = tf.reduce_mean(tf.reduce_sum((y_conv - y_)*(y_conv -y_),
+l2_loss = tf.reduce_mean(tf.reduce_sum((y_conv - y_)*(y_conv - y_),
                                        reduction_indices=[1]))
 #l2_loss = tf.reduce_mean(-tf.reduce_sum(y_conv*tf.log(y_+1e-7), reduction_indices=[1]))
-train_step = tf.train.AdamOptimizer(1e-6).minimize(l2_loss)
+train_step = tf.train.AdamOptimizer(1e-3).minimize(l2_loss)
 #train_step = tf.train.AdagradOptimizer(1e-3).minimize(l2_loss)
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
 
 #print_op = tf.Print(y_conv)
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-sess.run(tf.initialize_all_variables())
+tf.initialize_all_variables().run()
 
 loss_curve = open('./loss_curve.csv', 'w')
 for iteration in xrange(100000):
     if iteration % 60 == 0:
         valid_batch_x, valid_batch_y = data_sets.validation.next_batch(BATCH_SIZE)
-        acc = accuracy.eval(feed_dict={x: valid_batch_x,
-                                       y_: valid_batch_y, keep_prob:1.0})
-        loss = sess.run(l2_loss, feed_dict={x: valid_batch_x,
-                                            y_: valid_batch_y, keep_prob:1.0})
+        acc = accuracy.eval(feed_dict={x: data_sets.validation.images,
+                                       y_: data_sets.validation.labels, keep_prob:1.0})
+        loss = sess.run(l2_loss, feed_dict={x: data_sets.validation.images,
+                                            y_: data_sets.validation.labels, keep_prob:1.0})
 
 
-        p = sess.run(y_conv, feed_dict = {x: valid_batch_x,
-                                        y_: valid_batch_y,
+        p = sess.run(y_conv, feed_dict = {x: data_sets.validation.images,
+                                        y_: data_sets.validation.labels,
                                         keep_prob:1.0})
+
+        before_softmax = sess.run(y_matmul, feed_dict = {x: data_sets.validation.images,
+                                        y_: data_sets.validation.labels,
+                                        keep_prob:1.0})
+
 
 
         """
         print p
-        print p.shape
-
-        print valid_batch_y
         """
+        print p.shape
+        for i in xrange(len(p)):
+            a,b = p[i]
+            c,d = data_sets.validation.labels[i]
+            e,f = before_softmax[i]
+            print "gt[%d,%d], output[%d,%d], bs[%lf,%lf]" % (c,d,a,b,e,f)
+
+        #print valid_batch_y
 
         print '%dth iteration... accuracy >> %lf, loss .. %lf' % (iteration, acc, loss)
         contents = str(loss) + ',\n'

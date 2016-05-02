@@ -43,13 +43,11 @@ def image_to_dataset():
     images = glob.glob('./only_eye_region/usual_dataset/*')
 
     print "usual size >> " + str(len(images))
-
     for file in images:
         im = cv2.imread(file)
         im = cv2.resize(im, (32,32))
         image.append(im)
-        label.append([1.0,0.0])
-
+        label.append([0,1])
     images = glob.glob('./only_eye_region/drowsiness_dataset/*')
 
     print "drowsiness size >> " + str(len(images))
@@ -57,13 +55,13 @@ def image_to_dataset():
         im = cv2.imread(file)
         im = cv2.resize(im, (32,32))
         image.append(im)
-        label.append([0.0,1.0])
+        label.append([1,0])
 
     image = [x/float(255) for x in image]
     image = np.array(image)
     label = np.array(label)
 
-    print image
+    #print image
     perm = np.arange(image.shape[0])
     np.random.shuffle(perm)
     print perm
