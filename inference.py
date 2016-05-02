@@ -146,8 +146,7 @@ while True:
             eye_region_image = roi_gray[ey:ey+eh, ex:ex+ew]
             input_images = []
             input_images.append(eye_region_image)
-            for a in input_images:
-                a /= float(255)
+            input_images = [x/float(255) for x in input_images]
             input_images = np.array(input_images)
 
             # Detecting drowsiness using CNN models.
