@@ -1,8 +1,8 @@
 import glob
 import cv2
 import load_dataset
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 
 # loading opencv cascade model for detecting face and eye regions.
 face_cascade = cv2.CascadeClassifier("./haarcascade_frontalface_default.xml")
@@ -145,13 +145,13 @@ while True:
         for ex,ey,ew,eh in eyes:
             eye_region_image = roi_gray[ey:ey+eh, ex:ex+ew]
             input_images = []
-            input_images.append(eye_region_image)
+            input_images.append(cv2.resize(eye_region_image,(32,32)))
             input_images = [x/float(255) for x in input_images]
             input_images = np.array(input_images)
+            print input_images.shape
 
             # Detecting drowsiness using CNN models.
-            label = sess.run(tf.argmax(y_conv,1),
-                             feed_dict={x:input_images, keep_prob:1.0})
+            label = sess.run(tf.argmax(y_conv,1), feed_dict={x:input_images, keep_prob:1.0})
 
             cv2.rectangle(roi_gray, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
             print label
