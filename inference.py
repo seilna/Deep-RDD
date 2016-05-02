@@ -35,7 +35,7 @@ def max_pool_2x2(x):
 
 x = tf.placeholder(tf.float32, shape=[None,IM_SIZE,IM_SIZE,3])
 y_ = tf.placeholder(tf.float32, shape=[None,2])
-keep_prob = tf.placeholder("float")
+keep_prob = tf.placeholder(tf.float32)
 
 x_reshape = tf.reshape(x, [-1,IM_SIZE,IM_SIZE,3])
 
@@ -131,27 +131,32 @@ detecting whether eye is closed or not using trained CNN models.
 """
 cap = cv2.VideoCapture(0)
 
+prev_face = [(0,0,30,30)]
+prev_eyes = [(1,1,1,1), (1,1,1,1)]
+
 while True:
     ret, frame = cap.read()
     frame = cv2.resize(frame,(500,500))
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     face = face_cascade.detectMultiScale(gray, 1.1, 3)
 
-    for x,y,w,h in face:
-        roi_gray = frame[y:y+h, x:x+w]
+    if len(face) != 1: face=prev_face
+    else: prev_face = face
+    for a,b,w,h in face:
+        roi_gray = frame[b:b+h, a:a+w]
         eyes = eye_cascade.detectMultiScale(roi_gray)
-        if len(eyes) != 2: break
+        if len(eyes) != 2: eyes = prev_eyes
+        else: prev_eyes = eyes
 
         for ex,ey,ew,eh in eyes:
             eye_region_image = roi_gray[ey:ey+eh, ex:ex+ew]
-            input_images = []
-            input_images.append(cv2.resize(eye_region_image,(32,32)))
-            input_images = [x/float(255) for x in input_images]
-            input_images = np.array(input_images)
-            print input_images.shape
+            input_images = cv2.resize(eye_region_image, (32,32))
+            input_images.resize((1,32,32,3))
+            
+            input_images = np.divide(input_images, 255.0)
 
             # Detecting drowsiness using CNN models.
-            label = sess.run(tf.argmax(y_conv,1), feed_dict={x:input_images, keep_prob:1.0})
+            label = sess.run(tf.argmax(y_conv, 1), feed_dict={keep_prob:1.0, x:input_images})
 
             cv2.rectangle(roi_gray, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
             print label
@@ -160,8 +165,10 @@ while True:
             # images will be shown red filters.
             if label == 1:
                 #To Do
-                pass
-
-            cv2.imshow("Deep-DCNN", frame)
+                pass		
+    cv2.imshow("Deep-CNN", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):break
+cap.release()
+cv2.destroyAllWindows()			 
 
 
