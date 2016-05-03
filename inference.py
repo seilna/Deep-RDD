@@ -133,6 +133,8 @@ cap = cv2.VideoCapture(0)
 
 prev_face = [(0,0,30,30)]
 prev_eyes = [(1,1,1,1), (1,1,1,1)]
+drowsiness_check_list = [0] * 5
+drowsiness_check_idx = 0
 
 while True:
     ret, frame = cap.read()
@@ -140,16 +142,23 @@ while True:
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     face = face_cascade.detectMultiScale(gray, 1.1, 3)
 
-    if len(face) != 1: face=prev_face
+    if len(face) != 1:
+        face=prev_face
     else: prev_face = face
     for a,b,w,h in face:
-        roi_gray = frame[b:b+h, a:a+w]
+        prev_face = face
+        roi_gray = gray[b:b+h, a:a+w]
+        roi_color = frame[b:b+h, a:a+w]
         eyes = eye_cascade.detectMultiScale(roi_gray)
-        if len(eyes) != 2: eyes = prev_eyes
+        if len(eyes) != 2:
+            eyes = prev_eyes
         else: prev_eyes = eyes
 
         for ex,ey,ew,eh in eyes:
-            eye_region_image = roi_gray[ey:ey+eh, ex:ex+ew]
+            eye_region_image = roi_color[ey:ey+eh, ex:ex+ew]
+            prev_eyes = eyes          
+            p,q,r = eye_region_image.shape
+            if p==0 or q==0 : break
             input_images = cv2.resize(eye_region_image, (32,32))
             input_images.resize((1,32,32,3))
             
@@ -157,15 +166,18 @@ while True:
 
             # Detecting drowsiness using CNN models.
             label = sess.run(tf.argmax(y_conv, 1), feed_dict={keep_prob:1.0, x:input_images})
+            print label       
+            drowsiness_check_list[drowsiness_check_idx%5] = label[0]
+            drowsiness_check_idx += 1
+            print drowsiness_check_list			
+            # if drowsiness if detected,
+            # imaegs will be shown with red boxing.
+            if drowsiness_check_list == [1]*5:
+                cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,0,255), 1)
+            else:
+                cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
 
-            cv2.rectangle(roi_gray, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
-            print label
-
-            # if drowsiness is detected,
-            # images will be shown red filters.
-            if label == 1:
-                #To Do
-                pass		
+            
     cv2.imshow("Deep-CNN", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):break
 cap.release()
