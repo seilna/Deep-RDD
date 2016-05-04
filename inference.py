@@ -121,7 +121,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 tf.initialize_all_variables().run()
 
 saver = tf.train.Saver()
-SAVE_PATH = "./checkpoint/iteration.50000.ckpt"
+SAVE_PATH = "./checkpoint/ver1.0_iteration.64000.ckpt"
 saver.restore(sess, SAVE_PATH)
 
 
