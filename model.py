@@ -138,8 +138,8 @@ for iteration in xrange(1000000):
     batch_x, batch_y = data_sets.train.next_batch(BATCH_SIZE)
     train_step.run(feed_dict={x:batch_x, y_:batch_y, keep_prob:0.5})
 
-    if iteration % 2000 == 0  and iteration > 0 == 0 :
-        checkpoint_file = SAVE_PATH + "iteration." + str(iteration) + ".ckpt"
+    if iteration % 4000 == 0  and iteration > 0 == 0 :
+        checkpoint_file = SAVE_PATH + "ver1.0_iteration." + str(iteration) + ".ckpt"
         saver.save(sess,checkpoint_file)
         print "CNN models are saved in %s." % checkpoint_file
 
