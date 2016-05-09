@@ -3,7 +3,7 @@ import cv2
 import load_dataset
 import numpy as np
 import tensorflow as tf
-import sys,opt
+import sys
 
 # loading opencv cascade model for detecting face and eye regions.
 face_cascade = cv2.CascadeClassifier("./haarcascade_frontalface_default.xml")
@@ -22,7 +22,10 @@ IM_SIZE = 32
 BATCH_SIZE = 100
 WINDOW_SIZE = 4
 
+if len(sys.argv) == 2:
+    WINDOW_SIZE = int(sys[1])
 
+print "model sensitivity >> %d" % WINDOW_SIZE
 
 sess = tf.InteractiveSession()
 def weight_variable(shape):
@@ -162,20 +165,20 @@ while True:
 
         for ex,ey,ew,eh in eyes:
             eye_region_image = roi_color[ey:ey+eh, ex:ex+ew]
-            prev_eyes = eyes          
+            prev_eyes = eyes
             p,q,r = eye_region_image.shape
             if p==0 or q==0 : break
             input_images = cv2.resize(eye_region_image, (32,32))
             input_images.resize((1,32,32,3))
-            
+
             input_images = np.divide(input_images, 255.0)
 
             # Detecting drowsiness using CNN models.
             label = sess.run(tf.argmax(y_conv, 1), feed_dict={keep_prob:1.0, x:input_images})
-            print label       
+            print label
             drowsiness_check_list[drowsiness_check_idx%WINDOW_SIZE] = label[0]
             drowsiness_check_idx += 1
-            print drowsiness_check_list			
+            print drowsiness_check_list
             # if drowsiness if detected,
             # imaegs will be shown with red boxing.
             if drowsiness_check_list == [1]*WINDOW_SIZE:
@@ -183,10 +186,10 @@ while True:
             else:
                 cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
 
-            
+
     cv2.imshow("Deep-CNN", frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):break
 cap.release()
-cv2.destroyAllWindows()			 
+cv2.destroyAllWindows()
 
 
