@@ -3,6 +3,7 @@ import cv2
 import load_dataset
 import numpy as np
 import tensorflow as tf
+import sys,opt
 
 # loading opencv cascade model for detecting face and eye regions.
 face_cascade = cv2.CascadeClassifier("./haarcascade_frontalface_default.xml")
@@ -15,8 +16,13 @@ models consist of 9 convolution layers,
                   3 pooling layers,
                   2 fc layers.
 """
+
+
 IM_SIZE = 32
 BATCH_SIZE = 100
+WINDOW_SIZE = 4
+
+
 
 sess = tf.InteractiveSession()
 def weight_variable(shape):
@@ -133,7 +139,7 @@ cap = cv2.VideoCapture(0)
 
 prev_face = [(0,0,30,30)]
 prev_eyes = [(1,1,1,1), (1,1,1,1)]
-drowsiness_check_list = [0] * 5
+drowsiness_check_list = [0] * WINDOW_SIZE
 drowsiness_check_idx = 0
 
 while True:
@@ -167,12 +173,12 @@ while True:
             # Detecting drowsiness using CNN models.
             label = sess.run(tf.argmax(y_conv, 1), feed_dict={keep_prob:1.0, x:input_images})
             print label       
-            drowsiness_check_list[drowsiness_check_idx%5] = label[0]
+            drowsiness_check_list[drowsiness_check_idx%WINDOW_SIZE] = label[0]
             drowsiness_check_idx += 1
             print drowsiness_check_list			
             # if drowsiness if detected,
             # imaegs will be shown with red boxing.
-            if drowsiness_check_list == [1]*5:
+            if drowsiness_check_list == [1]*WINDOW_SIZE:
                 cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,0,255), 1)
             else:
                 cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
