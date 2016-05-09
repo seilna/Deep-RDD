@@ -22,6 +22,9 @@ IM_SIZE = 32
 BATCH_SIZE = 100
 WINDOW_SIZE = 4
 
+"""
+Determines model's sensitivity. (3~5 recommended.)
+"""
 if len(sys.argv) == 2:
     WINDOW_SIZE = int(sys.argv[1])
 
