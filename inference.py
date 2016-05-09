@@ -23,7 +23,7 @@ BATCH_SIZE = 100
 WINDOW_SIZE = 4
 
 if len(sys.argv) == 2:
-    WINDOW_SIZE = int(sys[1])
+    WINDOW_SIZE = int(sys.argv[1])
 
 print "model sensitivity >> %d" % WINDOW_SIZE
 
