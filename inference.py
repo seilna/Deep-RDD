@@ -150,7 +150,7 @@ drowsiness_check_idx = 0
 
 while True:
     ret, frame = cap.read()
-    frame = cv2.resize(frame,(500,500))
+    frame = cv2.resize(frame,(250,250))
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     face = face_cascade.detectMultiScale(gray, 1.1, 3)
 
@@ -166,6 +166,7 @@ while True:
             eyes = prev_eyes
         else: prev_eyes = eyes
 
+        cv2.rectangle(frame, (a,b), (a+w,b+h), (255,0,0), 1)
         for ex,ey,ew,eh in eyes:
             eye_region_image = roi_color[ey:ey+eh, ex:ex+ew]
             prev_eyes = eyes
