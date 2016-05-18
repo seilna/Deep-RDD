@@ -148,23 +148,54 @@ prev_eyes = [(1,1,1,1), (1,1,1,1)]
 drowsiness_check_list = [0] * WINDOW_SIZE
 drowsiness_check_idx = 0
 
+def rotate_check(face_size):
+	face_size /= 10
+	print "face size >> %d" % face_size
+	if not hasattr(rotate_check, "full_count"):
+		rotate_check.full_count = 0
+	if not hasattr(rotate_check, "size_distribution"):
+		rotate_check.size_distribution = [0] * 5000
+	rotate_check.full_count += 1
+	rotate_check.size_distribution[face_size/100] += 1
+	
+	percentage = rotate_check.size_distribution[face_size/100] * 100 / rotate_check.full_count
+	print "(%d/%d)" % (rotate_check.size_distribution[face_size/100], rotate_check.full_count)
+	if percentage  < 10:
+		print "%d , Fail!" % percentage
+		return False
+	rotate_check.size_distribution[face_size/100] += 1
+	print "Succes!"
+	return True
+
+
+continuous_error_count = 0
 while True:
     ret, frame = cap.read()
     frame = cv2.resize(frame,(250,250))
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     face = face_cascade.detectMultiScale(gray, 1.1, 3)
 
+    error_check = False
     if len(face) != 1:
         face=prev_face
-    else: prev_face = face
+        error_check = True
+        continuous_error_count += 1
+    else:
+        continuous_error_count = 0
+        prev_face = face
     for a,b,w,h in face:
+        face_size = w*h
         prev_face = face
         roi_gray = gray[b:b+h, a:a+w]
         roi_color = frame[b:b+h, a:a+w]
         eyes = eye_cascade.detectMultiScale(roi_gray)
         if len(eyes) != 2:
+            error_check = True
             eyes = prev_eyes
-        else: prev_eyes = eyes
+            continuous_error_count += 1
+        else:
+            continuous_error_count = 0
+            prev_eyes = eyes
 
         cv2.rectangle(frame, (a,b), (a+w,b+h), (255,0,0), 1)
         for ex,ey,ew,eh in eyes:
@@ -185,8 +216,13 @@ while True:
             print drowsiness_check_list
             # if drowsiness if detected,
             # imaegs will be shown with red boxing.
-            if drowsiness_check_list == [1]*WINDOW_SIZE:
+            if rotate_check(face_size) == True and continuous_error_count < 5 and drowsiness_check_list == [1]*WINDOW_SIZE:
                 cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,0,255), 1)
+                p,q,r = frame.shape
+                print frame.shape
+                for i in xrange(p):
+                    for j in xrange(q):
+					    frame[i,j,2] = 150 
             else:
                 cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
 
