@@ -1,14 +1,14 @@
 # Realtime Drowsiness_Detector
-Detecting whether driver is in drowsiness or not using Deep-CNN
+Detecting whether driver is in drowsiness or not using Convoluitional neural network.
 
 You can see demo video at : 
 # Training Usage
-if you want to train this model, write just 1 line following code. (you might need tensorflow & python-OpenCV dependancy)
+if you want to train this model,(you might need tensorflow & python-OpenCV dependancy)
 ```bash
 python model.py
 ```
 # Running Realtime drowsiness detector 
-if you want to run RDD, write following code. 
+if you want to run RDD, 
 ```bash
 python inference.py
 ```
