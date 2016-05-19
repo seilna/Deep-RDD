@@ -1,4 +1,4 @@
-# Realtime Drowsiness_Detector
+# *Deep RDD* : Realtime Drowsiness Detector given user face image stream.
 Detecting whether driver is in drowsiness or not using Convoluitional neural network.
 
 You can see demo video at : 
