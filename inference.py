@@ -223,8 +223,8 @@ while True:
                 for i in xrange(p):
                     for j in xrange(q):
 					    frame[i,j,2] = 150 
-            else:
-                cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
+            elif rotate_check(face_size) == True:
+				cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
 
 
     cv2.imshow("Deep-CNN", frame)
