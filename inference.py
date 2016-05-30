@@ -4,7 +4,8 @@ import load_dataset
 import numpy as np
 import tensorflow as tf
 import sys
-
+from getting_glasses_region import glasses_region
+from getting_glasses_region import relative_region
 # loading opencv cascade model for detecting face and eye regions.
 face_cascade = cv2.CascadeClassifier("./haarcascade_frontalface_default.xml")
 eye_cascade = cv2.CascadeClassifier("./haarcascade_eye.xml")
@@ -17,10 +18,18 @@ models consist of 9 convolution layers,
                   2 fc layers.
 """
 
-
 IM_SIZE = 32
 BATCH_SIZE = 100
 WINDOW_SIZE = 4
+
+"""
+There are 2 inference mode.
+one is usaul state,
+another is wearing glasses state.
+you might change mode executing program with giving options.
+"""
+glasses = False
+
 
 """
 Determines model's sensitivity. (3~5 recommended.)
@@ -28,6 +37,11 @@ Determines model's sensitivity. (3~5 recommended.)
 if len(sys.argv) == 2:
     WINDOW_SIZE = int(sys.argv[1])
 
+if len(sys.argv) == 3:
+	assert sys.argv[2] == "glasses", "invalid option used."
+	glasses = True
+
+assert len(sys.argv) < 4, "Too many options given."
 print "model sensitivity >> %d" % WINDOW_SIZE
 
 sess = tf.InteractiveSession()
@@ -142,7 +156,6 @@ getting realtime video of user,
 detecting whether eye is closed or not using trained CNN models.
 """
 cap = cv2.VideoCapture(0)
-
 prev_face = [(0,0,30,30)]
 prev_eyes = [(1,1,1,1), (1,1,1,1)]
 drowsiness_check_list = [0] * WINDOW_SIZE
@@ -167,28 +180,38 @@ def rotate_check(face_size):
 	print "Succes!"
 	return True
 
-
+relative_region_list = []
+if glasses == True:
+	relative_region_list = relative_region()
+	print relative_region_list
 continuous_error_count = 0
+total_cnt = 0
+error_classified_cnt = 0
 while True:
-    ret, frame = cap.read()
-    frame = cv2.resize(frame,(250,250))
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    face = face_cascade.detectMultiScale(gray, 1.1, 3)
+	ret, frame = cap.read()
+	total_cnt  += 1
+	frame = cv2.resize(frame,(250,250))
+	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	face = face_cascade.detectMultiScale(gray, 1.1, 3)
 
-    error_check = False
-    if len(face) != 1:
-        face=prev_face
-        error_check = True
-        continuous_error_count += 1
-    else:
-        continuous_error_count = 0
-        prev_face = face
-    for a,b,w,h in face:
-        face_size = w*h
-        prev_face = face
+	error_check = False
+	if len(face) != 1:
+		face=prev_face
+		error_check = True
+		continuous_error_count += 1
+	else:
+		continuous_error_count = 0
+		prev_face = face
+	for a,b,w,h in face:
+		face_size = w*h
+		prev_face = face
         roi_gray = gray[b:b+h, a:a+w]
         roi_color = frame[b:b+h, a:a+w]
-        eyes = eye_cascade.detectMultiScale(roi_gray)
+        eyes = []
+        if glasses == False:
+            eyes = eye_cascade.detectMultiScale(roi_gray)
+        elif glasses == True and error_check == False:
+			eyes = glasses_region(face, relative_region_list)
         if len(eyes) != 2:
             error_check = True
             eyes = prev_eyes
@@ -198,7 +221,10 @@ while True:
             prev_eyes = eyes
 
         cv2.rectangle(frame, (a,b), (a+w,b+h), (255,0,0), 1)
-        for ex,ey,ew,eh in eyes:
+        print "real eyes >> ", 
+        print eyes
+        for f_ex,f_ey,f_ew,f_eh in eyes:
+            ex, ey, ew, eh = int(f_ex), int(f_ey), int(f_ew), int(f_eh)
             eye_region_image = roi_color[ey:ey+eh, ex:ex+ew]
             prev_eyes = eyes
             p,q,r = eye_region_image.shape
@@ -217,18 +243,19 @@ while True:
             # if drowsiness if detected,
             # imaegs will be shown with red boxing.
             if rotate_check(face_size) == True and continuous_error_count < 5 and drowsiness_check_list == [1]*WINDOW_SIZE:
-                cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,0,255), 1)
-                p,q,r = frame.shape
-                print frame.shape
-                for i in xrange(p):
-                    for j in xrange(q):
+				cv2.rectangle(roi_color, (int(ex),int(ey)), (int(ex+ew), int(ey+eh)), (0,0,255), 1)
+				p,q,r = frame.shape
+				error_classified_cnt += 1		
+
+				for i in xrange(p):
+					for j in xrange(q):
 					    frame[i,j,2] = 150 
             elif rotate_check(face_size) == True:
-				cv2.rectangle(roi_color, (ex,ey), (ex+ew, ey+eh), (0,255,0), 1)
+				cv2.rectangle(roi_color, (int(ex),int(ey)), (int(ex+ew), int(ey+eh)), (0,255,0), 1)
 
 
-    cv2.imshow("Deep-CNN", frame)
-    if cv2.waitKey(1) & 0xFF == ord('q'):break
+	cv2.imshow("Deep-CNN", frame)
+	if cv2.waitKey(1) & 0xFF == ord('q'):break
 cap.release()
 cv2.destroyAllWindows()
 
