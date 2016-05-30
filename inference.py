@@ -156,10 +156,12 @@ getting realtime video of user,
 detecting whether eye is closed or not using trained CNN models.
 """
 cap = cv2.VideoCapture(0)
+#cap = cv2.VideoCapture("/Users/naseil/Desktop/original.mov")
 prev_face = [(0,0,30,30)]
 prev_eyes = [(1,1,1,1), (1,1,1,1)]
 drowsiness_check_list = [0] * WINDOW_SIZE
 drowsiness_check_idx = 0
+
 
 def rotate_check(face_size):
 	face_size /= 10
@@ -187,6 +189,9 @@ if glasses == True:
 continuous_error_count = 0
 total_cnt = 0
 error_classified_cnt = 0
+
+error_path = "./errorounes_classified/"
+error_file_num = 0
 while True:
 	ret, frame = cap.read()
 	total_cnt  += 1
@@ -223,6 +228,7 @@ while True:
         cv2.rectangle(frame, (a,b), (a+w,b+h), (255,0,0), 1)
         print "real eyes >> ", 
         print eyes
+        eye_full_cnt = 0
         for f_ex,f_ey,f_ew,f_eh in eyes:
             ex, ey, ew, eh = int(f_ex), int(f_ey), int(f_ew), int(f_eh)
             eye_region_image = roi_color[ey:ey+eh, ex:ex+ew]
@@ -243,16 +249,26 @@ while True:
             # if drowsiness if detected,
             # imaegs will be shown with red boxing.
             if rotate_check(face_size) == True and continuous_error_count < 5 and drowsiness_check_list == [1]*WINDOW_SIZE:
-				cv2.rectangle(roi_color, (int(ex),int(ey)), (int(ex+ew), int(ey+eh)), (0,0,255), 1)
+				cv2.rectangle(roi_color, (int(ex),int(ey)), (int(ex+ew), int(ey+eh)), (0,255,0), 1)
+				eye_full_cnt += 1
 				p,q,r = frame.shape
 				error_classified_cnt += 1		
+				error_file_num += 1
+				error_file_name = error_path + str(error_file_num) + ".jpeg"
+				#cv2.imwrite(error_file_name, frame)
 
+				"""
 				for i in xrange(p):
 					for j in xrange(q):
 					    frame[i,j,2] = 150 
+				"""
             elif rotate_check(face_size) == True:
 				cv2.rectangle(roi_color, (int(ex),int(ey)), (int(ex+ew), int(ey+eh)), (0,255,0), 1)
-
+        if eye_full_cnt == 2:
+			p,q,r = frame.shape
+			for i in xrange(p):
+				for j in xrange(q):
+					frame[i,j,2] = 150
 
 	cv2.imshow("Deep-CNN", frame)
 	if cv2.waitKey(1) & 0xFF == ord('q'):break
